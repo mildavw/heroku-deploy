@@ -16,7 +16,14 @@ machine git.heroku.com
     password ${api_key}
 EOF`;
 
-const addRemote = ({ app_name, dontautocreate, buildpack, region, team, stack }) => {
+const addRemote = ({
+  app_name,
+  dontautocreate,
+  buildpack,
+  region,
+  team,
+  stack,
+}) => {
   try {
     execSync("heroku git:remote --app " + app_name);
     console.log("Added git remote heroku");
@@ -51,7 +58,9 @@ const addConfig = ({ app_name, env_file, appdir }) => {
     configVars = [...configVars, ...newVars];
   }
   if (configVars.length !== 0) {
+    console.log(`heroku config:set --app=${app_name} ${configVars.join(" ")}`);
     execSync(`heroku config:set --app=${app_name} ${configVars.join(" ")}`);
+    console.log("heroku configVars set");
   }
 };
 
@@ -89,16 +98,25 @@ const deploy = ({
       .toString()
       .trim();
 
+    console.log(`Remote branch: ${remote_branch}`);
+
     if (remote_branch === "master") {
+      console.log("Installing heroku-repo");
       execSync("heroku plugins:install heroku-repo");
+      console.log("Resetting repo for master/main change");
       execSync("heroku repo:reset -a " + app_name);
     }
 
     if (appdir === "") {
+      console.log(`git push heroku ${branch}:refs/heads/main ${force}`);
+
       execSync(`git push heroku ${branch}:refs/heads/main ${force}`, {
         maxBuffer: 104857600,
       });
     } else {
+      console.log(
+        `git push ${force} heroku \`git subtree split --prefix=${appdir} ${branch}\`:refs/heads/main`
+      );
       execSync(
         `git push ${force} heroku \`git subtree split --prefix=${appdir} ${branch}\`:refs/heads/main`,
         { maxBuffer: 104857600 }
